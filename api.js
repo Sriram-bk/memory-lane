@@ -8,10 +8,11 @@ import { fileURLToPath } from 'url'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import process from 'process'
+import crypto from 'crypto'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key' // In production, always use environment variable
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
 
 const app = express()
 const port = 4001
@@ -112,6 +113,17 @@ db.serialize(() => {
       original_name TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (memory_id) REFERENCES memories(id) ON DELETE CASCADE
+    )
+  `)
+
+  // Create share tokens table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS share_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      token TEXT UNIQUE NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `)
 })
@@ -502,6 +514,80 @@ app.post('/login', (req, res) => {
       res.status(500).json({ error: err.message })
     }
   })
+})
+
+// Create or get share token for user
+app.post('/share-token', authenticateToken, (req, res) => {
+  // First check if user already has a share token
+  db.get('SELECT token FROM share_tokens WHERE user_id = ?', [req.user.id], (err, row) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (row) {
+      // Return existing token
+      return res.json({ token: row.token });
+    }
+
+    // Generate new token (32 random bytes as hex)
+    const token = crypto.randomBytes(32).toString('hex');
+
+    // Insert new token
+    db.run('INSERT INTO share_tokens (user_id, token) VALUES (?, ?)',
+      [req.user.id, token],
+      (err) => {
+        if (err) {
+          return res.status(500).json({ error: err.message });
+        }
+        res.json({ token });
+      }
+    );
+  });
+});
+
+// Get shared memories using token
+app.get('/shared/:token/memories', (req, res) => {
+  const { token } = req.params;
+
+  // First get the user_id for this token
+  db.get('SELECT user_id FROM share_tokens WHERE token = ?', [token], (err, shareToken) => {
+    if (err) {
+      return res.status(500).json({ error: err.message });
+    }
+
+    if (!shareToken) {
+      return res.status(404).json({ error: 'Invalid share token' });
+    }
+
+    // Now get the memories for this user
+    db.all(`
+      SELECT 
+        m.*,
+        json_group_array(
+          json_object(
+            'id', mi.id,
+            'url', '/uploads/' || mi.filename,
+            'originalName', mi.original_name
+          )
+        ) as images
+      FROM memories m
+      LEFT JOIN memory_images mi ON m.id = mi.memory_id
+      WHERE m.user_id = ?
+      GROUP BY m.id
+      ORDER BY m.timestamp DESC
+    `, [shareToken.user_id], (err, rows) => {
+      if (err) {
+        res.status(500).json({ error: err.message })
+        return
+      }
+      // Parse the images JSON string for each memory
+      const memories = rows.map(memory => ({
+        ...memory,
+        images: JSON.parse(memory.images).filter(img => img.id !== null)
+      }))
+      res.json({ memories })
+    })
+  });
 })
 
 app.listen(port, () => {

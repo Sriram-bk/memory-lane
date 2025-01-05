@@ -6,10 +6,11 @@ import { useState, useRef, useEffect } from 'react';
 
 interface MemoryCardProps {
     memory: Memory;
-    onEdit: (memory: Memory) => void;
+    onEdit?: (memory: Memory) => void;
+    readOnly?: boolean;
 }
 
-export const MemoryCard = ({ memory, onEdit }: MemoryCardProps) => {
+export const MemoryCard = ({ memory, onEdit, readOnly }: MemoryCardProps) => {
     const { mutate: deleteMemory, isPending: isDeleting } = useDeleteMemory();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
@@ -22,7 +23,7 @@ export const MemoryCard = ({ memory, onEdit }: MemoryCardProps) => {
     };
 
     const handleEdit = () => {
-        onEdit(memory);
+        onEdit?.(memory);
         setIsMenuOpen(false);
     };
 
@@ -47,39 +48,41 @@ export const MemoryCard = ({ memory, onEdit }: MemoryCardProps) => {
                         {new Date(memory.timestamp).toLocaleDateString()}
                     </p>
                 </div>
-                <div className="relative" ref={menuRef}>
-                    <ButtonText
-                        size="small"
-                        onClick={() => setIsMenuOpen(!isMenuOpen)}
-                        className="text-neutral-600 hover:bg-neutral-50"
-                    >
-                        <EllipsisVerticalIcon className="h-5 w-5" />
-                    </ButtonText>
+                {!readOnly && onEdit && (
+                    <div className="relative" ref={menuRef}>
+                        <ButtonText
+                            size="small"
+                            onClick={() => setIsMenuOpen(!isMenuOpen)}
+                            className="text-neutral-600 hover:bg-neutral-50"
+                        >
+                            <EllipsisVerticalIcon className="h-5 w-5" />
+                        </ButtonText>
 
-                    {isMenuOpen && (
-                        <div className="absolute right-0 mt-1 w-48 rounded-lg bg-white shadow-lg border border-neutral-200 py-1 z-10">
-                            <button
-                                onClick={handleEdit}
-                                className="w-full px-4 py-2 text-left text-sm text-neutral-600 hover:bg-neutral-50 flex items-center space-x-2"
-                            >
-                                <PencilIcon className="h-4 w-4 text-neutral-500" />
-                                <span>Edit</span>
-                            </button>
-                            <button
-                                onClick={handleDelete}
-                                disabled={isDeleting}
-                                className="w-full px-4 py-2 text-left text-sm text-neutral-600 hover:bg-neutral-50 flex items-center space-x-2 disabled:opacity-50"
-                            >
-                                {isDeleting ? (
-                                    <Spinner size="small" className="text-neutral-500" />
-                                ) : (
-                                    <TrashIcon className="h-4 w-4 text-neutral-500" />
-                                )}
-                                <span>Delete</span>
-                            </button>
-                        </div>
-                    )}
-                </div>
+                        {isMenuOpen && (
+                            <div className="absolute right-0 mt-1 w-48 rounded-lg bg-white shadow-lg border border-neutral-200 py-1 z-10">
+                                <button
+                                    onClick={handleEdit}
+                                    className="w-full px-4 py-2 text-left text-sm text-neutral-600 hover:bg-neutral-50 flex items-center space-x-2"
+                                >
+                                    <PencilIcon className="h-4 w-4 text-neutral-500" />
+                                    <span>Edit</span>
+                                </button>
+                                <button
+                                    onClick={handleDelete}
+                                    disabled={isDeleting}
+                                    className="w-full px-4 py-2 text-left text-sm text-neutral-600 hover:bg-neutral-50 flex items-center space-x-2 disabled:opacity-50"
+                                >
+                                    {isDeleting ? (
+                                        <Spinner size="small" className="text-neutral-500" />
+                                    ) : (
+                                        <TrashIcon className="h-4 w-4 text-neutral-500" />
+                                    )}
+                                    <span>Delete</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
             <p className="mt-4 text-gray-700">{memory.description}</p>
             {memory.images && memory.images.length > 0 && (

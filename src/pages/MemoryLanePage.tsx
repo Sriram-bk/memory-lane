@@ -1,4 +1,4 @@
-import { CubeIcon, PlusIcon } from '@heroicons/react/20/solid'
+import { CubeIcon, PlusIcon, ShareIcon } from '@heroicons/react/20/solid'
 import { useState } from 'react'
 import { ButtonSolid } from '../designComponents/ButtonSolid'
 import { Modal } from '../designComponents/Modal'
@@ -8,12 +8,29 @@ import { MemoryCard } from '../features/MemoryCard/MemoryCard'
 import { Memory, useGetMemories } from '../services/hooks'
 import { UpdateMemoryForm } from '../features/UpdateMemoryForm/UpdateMemoryForm'
 import { useAuthContext } from '../features/Auth/AuthContext'
+import { useShareToken } from '../services/hooks/useShareToken'
+import { ButtonText } from '../designComponents/ButtonText'
+import { ButtonOutline } from '../designComponents/ButtonOutline'
 
 export function MemoryLanePage() {
     const [isAddingMemory, setIsAddingMemory] = useState(false);
     const [editingMemory, setEditingMemory] = useState<Memory | null>(null);
     const { data: memoriesData, isLoading } = useGetMemories();
     const { logout } = useAuthContext();
+    const [showShareToast, setShowShareToast] = useState(false);
+    const { mutateAsync: getShareToken, isPending: isGettingShareToken } = useShareToken();
+
+    const handleShare = async () => {
+        try {
+            const token = await getShareToken();
+            const shareUrl = `${window.location.origin}/shared/${token}`;
+            await navigator.clipboard.writeText(shareUrl);
+            setShowShareToast(true);
+            setTimeout(() => setShowShareToast(false), 2000);
+        } catch (error) {
+            console.error('Failed to get share token:', error);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gray-50">
@@ -26,17 +43,42 @@ export function MemoryLanePage() {
                         </h1>
                     </div>
                     <div className="flex items-center space-x-4">
+                        <ButtonOutline
+                            size="small"
+                            onClick={handleShare}
+                            disabled={isGettingShareToken}
+                        >
+                            {isGettingShareToken ? (
+                                <>
+                                    <Spinner size="small" />
+                                    <span>Generating...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <ShareIcon className="h-5 w-5" />
+                                    <span>Share</span>
+                                </>
+                            )}
+                        </ButtonOutline>
                         <ButtonSolid
+                            size="small"
                             onClick={() => setIsAddingMemory(true)}
                         >
                             <PlusIcon className="h-5 w-5" />
                             <span>Add Memory</span>
                         </ButtonSolid>
-                        <ButtonSolid onClick={logout}>
+                        <ButtonText size="small" className='text-red-800' onClick={logout}>
                             Logout
-                        </ButtonSolid>
+                        </ButtonText>
                     </div>
                 </div>
+
+                {/* Share Toast */}
+                {showShareToast && (
+                    <div className="fixed top-4 right-4 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg">
+                        Share link copied to clipboard!
+                    </div>
+                )}
 
                 <Modal
                     isOpen={isAddingMemory}

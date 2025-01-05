@@ -15,6 +15,12 @@ interface AuthResponse {
     message?: string
 }
 
+interface DecodedToken {
+    id: number;
+    username: string;
+    exp: number;
+}
+
 export const useAuth = () => {
     const login = useMutation({
         mutationFn: async (credentials: LoginCredentials): Promise<AuthResponse> => {
@@ -70,11 +76,29 @@ export const useAuth = () => {
 
     const isAuthenticated = () => !!getToken()
 
+    const getCurrentUser = (): DecodedToken | null => {
+        const token = getToken();
+        if (!token) return null;
+
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(c =>
+                '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+            ).join(''));
+
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            return null;
+        }
+    }
+
     return {
         login,
         register,
         logout,
         getToken,
         isAuthenticated,
+        getCurrentUser,
     }
 } 

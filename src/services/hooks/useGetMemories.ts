@@ -4,11 +4,12 @@ import { Memory, API_URL, getFetchOptions } from './types';
 /**
  * Hook to fetch all memories
  */
-export const useGetMemories = () => {
+export const useGetMemories = (tokenId?: string) => {
     return useQuery<{ memories: Memory[] }>({
-        queryKey: ['memories'],
+        queryKey: ['memories', tokenId],
         queryFn: async () => {
-            const response = await fetch(`${API_URL}/memories`, getFetchOptions());
+            const url = tokenId ? `${API_URL}/shared/${tokenId}/memories` : `${API_URL}/memories`;
+            const response = await fetch(url, getFetchOptions());
             if (!response.ok) {
                 throw new Error('Network response was not ok');
             }
