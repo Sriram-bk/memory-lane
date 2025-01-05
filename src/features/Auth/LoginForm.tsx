@@ -3,7 +3,7 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { TextField } from '../../designComponents/TextField'
 import { ButtonSolid } from '../../designComponents/ButtonSolid'
-import { useAuth } from '../../services/hooks/useAuth'
+import { useAuthContext } from '../Auth/AuthContext'
 import { useState } from 'react'
 
 const schema = yup.object({
@@ -18,8 +18,9 @@ interface LoginFormProps {
 }
 
 export const LoginForm = ({ onSuccess }: LoginFormProps) => {
-    const { login } = useAuth()
+    const { login } = useAuthContext()
     const [error, setError] = useState<string | null>(null)
+    const [isLoading, setIsLoading] = useState(false)
     const {
         register,
         handleSubmit,
@@ -32,10 +33,8 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
     const onSubmit = handleSubmit(async (data) => {
         try {
             setError(null)
-            await login.mutateAsync({
-                username: data.email,
-                password: data.password
-            })
+            setIsLoading(true)
+            await login(data.email, data.password)
             onSuccess?.()
         } catch (error) {
             console.error('Login failed:', error)
@@ -44,40 +43,39 @@ export const LoginForm = ({ onSuccess }: LoginFormProps) => {
             } else {
                 setError('An error occurred during login')
             }
+        } finally {
+            setIsLoading(false)
         }
     })
 
     return (
-        <form onSubmit={onSubmit} className="space-y-4 w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-6">Login</h2>
+        <form onSubmit={onSubmit} className="mt-8 space-y-6">
+            <div className="space-y-4">
+                <TextField
+                    label="Email"
+                    type="email"
+                    error={errors.email?.message}
+                    {...register('email')}
+                />
+                <TextField
+                    label="Password"
+                    type="password"
+                    error={errors.password?.message}
+                    {...register('password')}
+                />
+            </div>
 
-            <TextField
-                label="Email"
-                type="email"
-                {...register('email')}
-                error={errors.email?.message}
-            />
-
-            <TextField
-                label="Password"
-                type="password"
-                {...register('password')}
-                error={errors.password?.message}
-            />
+            {error && (
+                <div className="text-red-500 text-sm mt-2">{error}</div>
+            )}
 
             <ButtonSolid
                 type="submit"
+                disabled={isLoading}
                 className="w-full"
-                disabled={login.isPending}
             >
-                {login.isPending ? 'Logging in...' : 'Login'}
+                {isLoading ? 'Signing in...' : 'Sign in'}
             </ButtonSolid>
-
-            {(error || login.error) && (
-                <p className="text-red-500 text-sm mt-2">
-                    {error || login.error?.message || 'An error occurred during login'}
-                </p>
-            )}
         </form>
     )
 } 
