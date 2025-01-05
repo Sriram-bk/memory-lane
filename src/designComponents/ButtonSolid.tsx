@@ -20,8 +20,9 @@ export type ButtonSolidProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   disabled?: boolean;
   /**
    * Function to be called when the button is clicked.
+   * Optional when type is "submit".
    */
-  onClick: () => void;
+  onClick?: () => void;
   /**
    * How large should the button be?
    * @default 'medium'

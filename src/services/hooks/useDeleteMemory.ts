@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ApiResponse, API_URL } from './types';
+import { API_URL, getFetchOptions } from './types';
 
 /**
  * Hook to delete a memory
@@ -7,21 +7,18 @@ import { ApiResponse, API_URL } from './types';
 export const useDeleteMemory = () => {
     const queryClient = useQueryClient();
 
-    return useMutation<ApiResponse, Error, number>({
-        mutationFn: async (id) => {
-            const response = await fetch(`${API_URL}/memories/${id}`, {
+    return useMutation({
+        mutationFn: async (id: number) => {
+            const response = await fetch(`${API_URL}/memories/${id}`, getFetchOptions({
                 method: 'DELETE',
-            });
+            }));
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                throw new Error('Failed to delete memory');
             }
             return response.json();
         },
-        onSuccess: (_data: ApiResponse, id: number) => {
-            // Invalidate and refetch memories list
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['memories'] });
-            // Remove the deleted memory from the cache
-            queryClient.removeQueries({ queryKey: ['memories', id] });
         },
     });
 }; 

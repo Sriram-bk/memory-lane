@@ -1,30 +1,35 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { UpdateMemoryData, ApiResponse, API_URL } from './types';
+import { API_URL, getFetchOptions } from './types';
 
-/**
- * Hook to update an existing memory
- */
+interface UpdateMemoryData {
+    id: number;
+    title: string;
+    description: string;
+    timestamp: string;
+    images: {
+        url: string;
+        originalName: string;
+    }[];
+}
+
 export const useUpdateMemory = () => {
     const queryClient = useQueryClient();
 
-    return useMutation<ApiResponse, Error, UpdateMemoryData>({
-        mutationFn: async ({ id, ...data }) => {
-            const response = await fetch(`${API_URL}/memories/${id}`, {
+    return useMutation({
+        mutationFn: async (data: UpdateMemoryData) => {
+            const response = await fetch(`${API_URL}/memories/${data.id}`, getFetchOptions({
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
                 body: JSON.stringify(data),
-            });
+            }));
+
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                throw new Error('Failed to update memory');
             }
+
             return response.json();
         },
-        onSuccess: (_data: ApiResponse, variables: UpdateMemoryData) => {
-            // Invalidate and refetch the updated memory and the list
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['memories'] });
-            queryClient.invalidateQueries({ queryKey: ['memories', variables.id] });
         },
     });
 }; 

@@ -1,28 +1,33 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { CreateMemoryData, ApiResponse, API_URL } from './types';
+import { API_URL, getFetchOptions } from './types';
 
-/**
- * Hook to create a new memory
- */
+interface CreateMemoryData {
+    title: string;
+    description: string;
+    timestamp: string;
+    images: {
+        url: string;
+        originalName: string;
+    }[];
+}
+
 export const useCreateMemory = () => {
     const queryClient = useQueryClient();
 
-    return useMutation<ApiResponse, Error, CreateMemoryData>({
-        mutationFn: async (data) => {
-            const response = await fetch(`${API_URL}/memories`, {
+    return useMutation({
+        mutationFn: async (data: CreateMemoryData) => {
+            const response = await fetch(`${API_URL}/memories`, getFetchOptions({
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
                 body: JSON.stringify(data),
-            });
+            }));
+
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                throw new Error('Failed to create memory');
             }
+
             return response.json();
         },
         onSuccess: () => {
-            // Invalidate and refetch memories list
             queryClient.invalidateQueries({ queryKey: ['memories'] });
         },
     });

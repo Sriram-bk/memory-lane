@@ -8,7 +8,11 @@ export interface Memory {
     title: string;
     description: string;
     timestamp: string;
-    images: Image[];
+    images: {
+        id: number;
+        url: string;
+        originalName: string;
+    }[];
 }
 
 export interface CreateMemoryData {
@@ -31,4 +35,21 @@ export interface ApiResponse<T> {
     error?: string;
 }
 
-export const API_URL = 'http://localhost:4001'; 
+export const API_URL = 'http://localhost:4001';
+
+export const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+};
+
+export const getFetchOptions = (options: RequestInit = {}): RequestInit => ({
+    credentials: 'include',
+    ...options,
+    headers: {
+        ...getAuthHeaders(),
+        ...(options.headers || {}),
+    },
+}); 
