@@ -1,15 +1,5 @@
 # Memory Lane
 
-**Please avoid initiating pull requests on this repository or forking this repository. To submit your solution, either set up a repository on your own account or forward a zip file to the appropriate contact within our talent team.**
-
-### Problem definition
-
-After a series of discovery calls we found out a problem that our users are facing. They are having a hard time sharing their memories with friends and family. They are using a combination of social media, messaging apps, and email to share their memories. They are looking for a solution that allows them to store and share their memories in a single place.
-
-As a first iteration for this solution, we want to build a web application that allows users to create a memory lane and share it with friends and family. A memory lane is a collection of events that happened in a chronological order. Each event consists of a title, a description, a timestamp, and at least one image.
-
-## Implementation
-
 ### Tech Stack
 - React with TypeScript for the frontend
 - React Query for server state management
@@ -96,3 +86,47 @@ The backend is implemented as a RESTful API service with the following key endpo
 - Intuitive memory timeline visualization
 - Easy-to-use image upload and management
 - Seamless sharing functionality
+
+### Application Screenshots & User Flow
+
+#### 1. Authentication
+The application starts with a secure authentication process.
+
+**Login Page**
+![Login interface with email and password fields](./preview/login.png)
+*Users can log in with their existing credentials*
+
+**Registration Page**
+![Registration interface for new users](./preview/register.png)
+*New users can create an account*
+
+#### 2. Memory Management
+After authentication, users can manage their memories.
+
+**Empty State**
+![Empty state showing no memories](./preview/empty-state.png)
+*Initial view when no memories have been added*
+
+**Memory Creation - Error Handling**
+![Add memory form showing validation errors](./preview/add-memory-error-state.png)
+*Form validation and error handling when creating memories*
+
+**Memory Creation - Image Upload**
+![Memory creation with multiple image upload](./preview/add-memory-images.png)
+*Support for uploading and managing multiple images per memory*
+
+**Memory Timeline**
+![Timeline view with multiple memories](./preview/multi-memory-timeline-view.png)
+*Chronological display of all memories with images and descriptions*
+
+**Memory Actions**
+![Memory actions dropdown menu](./preview/memory-actions-dropdown.png)
+*Quick access to edit, delete, and share options*
+
+**Memory Editing**
+![Memory editing interface](./preview/edit-memory.png)
+*Interface for updating existing memories*
+
+**Shared Memory View**
+![Public view of shared memories](./preview/share-memory-view.png)
+*How memories appear when accessed through a share link*
